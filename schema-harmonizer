@@ -83,4 +83,5 @@ read -p "Done. Press any key to delete the data backup file."
 
 rm "$data_site"
 
-
+printf "If you get weird itnl table missing errors, you might try:\n"
+printf "UPDATE civicrm_domain SET locales = NULL, locale_custom_strings = NULL WHERE id = 1;"
