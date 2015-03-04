@@ -58,11 +58,11 @@ data_site=$(mktemp)
 echo "SET foreign_key_checks=0;" >> "$data_site"
 
 printf "Saving data from tables.\n"
-for table in $(cat $tables_ref); do mysqldump --no-create-info --skip-triggers "$db" "$table" >> "$data_site"; done
+for table in $(cat $tables_ref); do mysqldump --complete-insert --no-create-info --skip-triggers "$db" "$table" >> "$data_site"; done
 
 echo "SET foreign_key_checks=1;" >> "$data_site"
 # Make sure dump completed.
-if ! tail -n1 "$data_site" | grep "Dump completed" >/dev/null; then
+if ! tail -n2 "$data_site" | grep "Dump completed" >/dev/null; then
   printf "We seem to have failed to properly dump the data: %s\n" "$data_site"
   exit 1
 fi
@@ -70,6 +70,9 @@ fi
 read -p "Last chance to abort before we begin destroying data."
 
 # Now destroy...
+printf "Dropping triggers.\n"
+for trigger in $(mysql -e "SHOW TRIGGERS" "$db" | awk '{print $1}'); do mysql -e "DROP TRIGGER $trigger" "$db"; done
+
 printf "Re-creating the tables\n"
 mysql "$db" < "$create_ref"
 
