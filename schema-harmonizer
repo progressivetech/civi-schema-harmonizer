@@ -1,0 +1,86 @@
+#!/bin/bash
+
+# Pass the name of the database to harmonize as the first argument.
+#
+# Create tables list with:
+# mysql --skip-column-names -e "SHOW TABLES LIKE 'civicrm_%'" schemapiglet | grep -v "civicrm_value" > tables.reference.txt
+# Create create tables file with:
+#  for table in $(cat tables.reference.txt); do mysqldump --no-data --skip-triggers schemapiglet "$table" | sed 's/ AUTO_INCREMENT=[0-9]*//g' >> create.tables.reference.txt; done
+# Create  
+# for table in $(cat tables.reference.txt); do mysqldump --no-create-info --skip-triggers fanwapiglet "$table"  >> data.fanwa.txt; done
+
+db=$1
+
+if [ -z "$db" ]; then
+  printf "Pass the name of the database to harmonize as first argument.\n"
+  exit 1
+fi
+
+db_exists=$(mysql -e "SHOW DATABASES" | grep ^$db$)
+
+if [ -z "$db_exists" ]; then
+  printf "That db doesn't seem to exist.\n"
+  exit 1
+fi
+
+printf "This may destroy data. Be sure to run a backup first and put the site in maintenance mode.\n"
+read -p "Press any key to continue."
+
+
+tables_ref=tables.reference.txt
+create_ref=create.tables.reference.txt
+
+if [ ! -f "$create_ref" ]; then
+  printf "Can't find create tables reference file: %s\n" "$create_ref"
+  exit 1
+fi
+
+if [ ! -f "$tables_ref" ]; then
+  printf "Can't find tables reference file: %s\n"  "$tables_ref"
+  exit 1
+fi
+
+# First generate a create file for the site in question so we can diff
+# against the reference one and eye ball for errors.
+create_site=$(mktemp)
+
+for table in $(cat "$tables_ref"); do mysqldump --no-data --skip-triggers "$db" "$table" | sed 's/ AUTO_INCREMENT=[0-9]*//g' >> "$create_site"; done
+
+# Now show diff and give opportunity to bail
+read -p "Press any key to see the diff"
+
+diff -u "$create_site" "$create_ref" | less
+
+read -p "Continue? Or ctl-c to cancel"
+# Clean up
+rm "$create_site"
+data_site=$(mktemp)
+#echo "SET foreign_key_checks=0;" >> "$data_site"
+
+printf "Saving data from tables.\n"
+for table in $(cat $tables_ref); do mysqldump --no-create-info --skip-triggers "$db" "$table" >> "$data_site"; done
+
+#echo "SET foreign_key_checks=1;" >> "$data_site"
+# Make sure dump completed.
+if ! tail -n1 "$data_site" | grep "Dump completed" >/dev/null; then
+  printf "We seem to have failed to properly dump the data: %s\n" "$data_site"
+  exit 1
+fi
+
+read -p "Last chance to abort before we begin destroying data."
+
+# Now destroy...
+printf "Re-creating the tables\n"
+mysql "$db" < "$create_ref"
+
+printf "Data import file: %s\n" "$data_site"
+read -p "Now press any key to import the data"
+
+# Importing the data
+mysql "$db" < "$data_site"
+
+read -p "Done. Press any key to delete the data backup file."
+
+rm "$data_site"
+
+
