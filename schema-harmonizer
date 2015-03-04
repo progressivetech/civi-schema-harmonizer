@@ -3,11 +3,9 @@
 # Pass the name of the database to harmonize as the first argument.
 #
 # Create tables list with:
-# mysql --skip-column-names -e "SHOW TABLES LIKE 'civicrm_%'" schemapiglet | grep -v "civicrm_value" > tables.reference.txt
+#   mysql --skip-column-names -e "SHOW TABLES LIKE 'civicrm_%'" schemapiglet | grep -v "civicrm_value" > tables.reference.txt
 # Create create tables file with:
-#  for table in $(cat tables.reference.txt); do mysqldump --no-data --skip-triggers schemapiglet "$table" | sed 's/ AUTO_INCREMENT=[0-9]*//g' >> create.tables.reference.txt; done
-# Create  
-# for table in $(cat tables.reference.txt); do mysqldump --no-create-info --skip-triggers fanwapiglet "$table"  >> data.fanwa.txt; done
+#   for table in $(cat tables.reference.txt); do mysqldump --no-data --skip-triggers schemapiglet "$table" | sed 's/ AUTO_INCREMENT=[0-9]*//g' >> create.tables.reference.txt; done
 
 db=$1
 
@@ -71,7 +69,7 @@ read -p "Last chance to abort before we begin destroying data."
 
 # Now destroy...
 printf "Dropping triggers.\n"
-for trigger in $(mysql -e "SHOW TRIGGERS" "$db" | awk '{print $1}'); do mysql -e "DROP TRIGGER $trigger" "$db"; done
+for trigger in $(mysql --skip-column-names -e "SHOW TRIGGERS" "$db" | awk '{print $1}'); do mysql -e "DROP TRIGGER $trigger" "$db"; done
 
 printf "Re-creating the tables\n"
 mysql "$db" < "$create_ref"
