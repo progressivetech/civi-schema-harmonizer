@@ -3,11 +3,23 @@
 # Pass the name of the database to harmonize as the first argument.
 #
 # Create tables list with (replace <dbversion> with the actual db version of the schema:
-#   mysql --skip-column-names -e "SHOW TABLES LIKE 'civicrm_%'" schemapiglet | grep -v "civicrm_value" > schemas/<dbversion>.tables.reference.txt
+#   mysql --skip-column-names -e "SHOW TABLES LIKE 'civicrm_%'" schemapiglet | \
+#     grep -v "civicrm_value" > schemas/<dbversion>.tables.reference.txt
 # Create create tables file with:
-#   for table in $(cat tables.reference.txt); do mysqldump --no-data --skip-triggers schemapiglet "$table" | sed 's/ AUTO_INCREMENT=[0-9]*//g' >> schemas/<dbversion>.create.tables.reference.txt; done
+#   for table in $(cat schemas/<dbversion>.tables.reference.txt); do \
+#     mysqldump --no-data --skip-triggers --skip-comments schemapiglet "$table" | \
+#     sed 's/ AUTO_INCREMENT=[0-9]*//g' >> schemas/<dbversion>.create.tables.reference.txt; \
+#   done
 
 db=$1
+
+exit_cleanly() {
+  printf "Cleaning up temp files.\n"
+  [ -n "$create_site" ] && rm -f "$create_site"
+  [ -n "$data_site" ] && rm -rf "$data_site"
+}
+
+trap exit_cleanly EXIT
 
 if [ -z "$db" ]; then
   printf "Pass the name of the database to harmonize as first argument.\n"
@@ -33,7 +45,8 @@ if [ ! -f "$create_ref" ]; then
 fi
 
 if [ ! -f "$tables_ref" ]; then
-  printf "Can't find tables reference file: %s\n"  "$tables_ref"
+  printf "Can't find tables reference file: %s. Maybe a schema mis-match?\n"  "$tables_ref"
+  printf "See comments at beginning of file for directions on creating the reference schemas.\n"
   exit 1
 fi
 
@@ -44,7 +57,15 @@ read -p "Press any key to continue."
 # against the reference one and eye ball for errors.
 create_site=$(mktemp)
 
-for table in $(cat "$tables_ref"); do mysqldump --no-data --skip-triggers "$db" "$table" | sed 's/ AUTO_INCREMENT=[0-9]*//g' >> "$create_site"; done
+for table in $(cat "$tables_ref"); do 
+  mysqldump --skip-comments --no-data --skip-triggers "$db" "$table" | \
+    sed 's/ AUTO_INCREMENT=[0-9]*//g' >> \
+    "$create_site"; done
+
+if diff -q "$create_site" "$create_ref" >/dev/null; then
+  printf "No schema changes needed. Congrats.\n"
+  exit 0
+fi
 
 # Now show diff and give opportunity to bail
 read -p "Press any key to see the diff"
@@ -52,8 +73,7 @@ read -p "Press any key to see the diff"
 diff -u "$create_site" "$create_ref" | less
 
 read -p "Continue? Or ctl-c to cancel"
-# Clean up
-rm "$create_site"
+
 data_site=$(mktemp)
 echo "SET foreign_key_checks=0;" >> "$data_site"
 
@@ -67,7 +87,7 @@ if ! tail -n2 "$data_site" | grep "Dump completed" >/dev/null; then
   exit 1
 fi
 
-read -p "Last chance to abort before we begin destroying data."
+read -p "Last chance to abort before we begin destroying data. Press ctl-c to cancel or any key to continue."
 
 # Now destroy...
 printf "Dropping triggers.\n"
@@ -77,14 +97,14 @@ printf "Re-creating the tables\n"
 mysql "$db" < "$create_ref"
 
 printf "Data import file: %s\n" "$data_site"
-read -p "Now press any key to import the data"
+read -p "Now press any key to import the data or ctl-c to cancle."
 
 # Importing the data
 mysql "$db" < "$data_site"
 
 read -p "Done. Press any key to delete the data backup file."
 
-rm "$data_site"
-
 printf "If you get weird itnl table missing errors, you might try:\n"
 printf "UPDATE civicrm_domain SET locales = NULL, locale_custom_strings = NULL WHERE id = 1;"
+
+exit 0
