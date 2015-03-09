@@ -2,10 +2,10 @@
 
 # Pass the name of the database to harmonize as the first argument.
 #
-# Create tables list with:
-#   mysql --skip-column-names -e "SHOW TABLES LIKE 'civicrm_%'" schemapiglet | grep -v "civicrm_value" > tables.reference.txt
+# Create tables list with (replace <dbversion> with the actual db version of the schema:
+#   mysql --skip-column-names -e "SHOW TABLES LIKE 'civicrm_%'" schemapiglet | grep -v "civicrm_value" > schemas/<dbversion>.tables.reference.txt
 # Create create tables file with:
-#   for table in $(cat tables.reference.txt); do mysqldump --no-data --skip-triggers schemapiglet "$table" | sed 's/ AUTO_INCREMENT=[0-9]*//g' >> create.tables.reference.txt; done
+#   for table in $(cat tables.reference.txt); do mysqldump --no-data --skip-triggers schemapiglet "$table" | sed 's/ AUTO_INCREMENT=[0-9]*//g' >> schemas/<dbversion>.create.tables.reference.txt; done
 
 db=$1
 
@@ -21,15 +21,14 @@ if [ -z "$db_exists" ]; then
   exit 1
 fi
 
-printf "This may destroy data. Be sure to run a backup first and put the site in maintenance mode.\n"
-read -p "Press any key to continue."
+dbversion=$(mysql --skip-column-names -e "SELECT version FROM civicrm_domain WHERE id = 1" "$db")
 
-
-tables_ref=tables.reference.txt
-create_ref=create.tables.reference.txt
+tables_ref="schemas/${dbversion}.tables.reference.txt"
+create_ref="schemas/${dbversion}.create.tables.reference.txt"
 
 if [ ! -f "$create_ref" ]; then
-  printf "Can't find create tables reference file: %s\n" "$create_ref"
+  printf "Can't find create tables reference file: %s. Maybe a schema mis-match?\n" "$create_ref"
+  printf "See comments at beginning of file for directions on creating the reference schemas.\n"
   exit 1
 fi
 
@@ -37,6 +36,9 @@ if [ ! -f "$tables_ref" ]; then
   printf "Can't find tables reference file: %s\n"  "$tables_ref"
   exit 1
 fi
+
+printf "This may destroy data. Be sure to run a backup first and put the site in maintenance mode.\n"
+read -p "Press any key to continue."
 
 # First generate a create file for the site in question so we can diff
 # against the reference one and eye ball for errors.
