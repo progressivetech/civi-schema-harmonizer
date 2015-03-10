@@ -92,12 +92,13 @@ function cfk_get_schema_path() {
  */
 function cfk_generate() {
   $file = cfk_get_schema_path();
+  $file = '/tmp/jamie';
   if(file_exists($file)) {
     cfk_output("The file $file already exists.", 'error');
     return;
   }
   $ref = cfk_get_fk();
-  file_put_contents('/tmp/jamie', json_encode($ref));
+  file_put_contents($file, json_encode($ref));
 }
 
 /**
@@ -212,6 +213,9 @@ function cfk_fix($dry_run = FALSE) {
         // if it does exist, make sure all values are the same.
         if($params !== (array) $ref->$table->$constraint) {
           $drop = TRUE;
+          // If we are dropping it, we have to remove it from the $site variable
+          // so it will be re-created.
+          unset($site[$table][$constraint]);
         }
       }
       if($drop) {
@@ -220,6 +224,8 @@ function cfk_fix($dry_run = FALSE) {
     }
   }
 
+  reset($site);
+  reset($ref);
   while(list($table, $constraints) = each($ref)) {
     while(list($constraint, $params) = each($constraints)) {
       if(!array_key_exists($table, $site) || !array_key_exists($constraint, $site[$table])) {
