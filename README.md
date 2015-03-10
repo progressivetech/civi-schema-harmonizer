@@ -32,12 +32,12 @@ To use the script, follow these instructions:
 
  * Backup your database
  * Be sure your database schema matches one of the included schemas (check the schema directory for the version number of your database).
- * If your database is a different version, you will need to generate a reference tables list and reference schema with the following command (replace <dbversion> with the database version you are creating the schema for):
+ * If your database is a different version, you will need to generate a reference tables list and reference schema with the following command (replace <dbversion> with the database version you are creating the schema for and <dbname> with the name of the database):
 ```
-    mysql --skip-column-names -e "SHOW TABLES LIKE 'civicrm_%'" schemapiglet | \
+    mysql --skip-column-names -e "SHOW TABLES LIKE 'civicrm_%'" <dbname> | \
       grep -v "civicrm_value" > schemas/<dbversion>.tables.reference.txt
     for table in $(cat schemas/<dbversion>.tables.reference.txt); do \
-      mysqldump --no-data --skip-triggers --skip-comments schemapiglet "$table" | \
+      mysqldump --no-data --skip-triggers --skip-comments <dbname> "$table" | \
       sed 's/ AUTO_INCREMENT=[0-9]*//g' >> schemas/<dbversion>.create.tables.reference.txt; \
     done
 ```
