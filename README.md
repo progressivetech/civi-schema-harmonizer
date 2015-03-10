@@ -20,9 +20,9 @@ If you are using Drupal and have drush installed, you can use this approach.
  * Change into your web directory
  * Backup your database: `drush civicrm-sql-dump ~/civicrm.backup.sql`
  * Check for changes that would be made: `drush cfk-show`
- * Make the changes: `cfk-fix`
- * Check for orphaned records: `cfk-orphans-show`
- * Fix orphaned records: `cfk-orphans-fix`
+ * Make the changes: `drush cfk-fix`
+ * Check for orphaned records: `drush cfk-orphans-show`
+ * Fix orphaned records: `drush cfk-orphans-fix`
 
 See below for a more destructive but complete approach.
 
