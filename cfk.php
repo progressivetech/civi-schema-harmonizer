@@ -260,3 +260,14 @@ function cfk_fix($dry_run = FALSE) {
     }
   }
 }
+
+/**
+ * Rebuild CiviCRM triggers.
+ * 
+ * Convenience function - our bash script drops triggers to
+ * avoid any constraint violations or problems caused by triggers
+ * being fired. This function re-builds them.
+ */
+function cfk_rebuild_triggers() {
+  CRM_Core_DAO::triggerRebuild();    
+}

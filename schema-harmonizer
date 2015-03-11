@@ -104,6 +104,7 @@ mysql "$db" < "$data_site"
 
 read -p "Done. Press any key to delete the data backup file."
 
+printf "Please see the README file for instructions on how to delete orphans and re-enable your triggers.\n"
 printf "If you get weird itnl table missing errors, you might try:\n"
 printf "UPDATE civicrm_domain SET locales = NULL, locale_custom_strings = NULL WHERE id = 1;"
 

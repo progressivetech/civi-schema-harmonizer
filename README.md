@@ -46,4 +46,4 @@ To use the script, follow these instructions:
 ```
     ./schema-harmonizer <dbname>
 ```
- * Once you have fixed your schema, you may have orphaned records (if your schema was missing foreign key). Check the delete-orphans.php script for a function that will do that for you. 
+ * Once you have fixed your schema, you may have orphaned records (if your schema was missing foreign keys). If you are using drush, you can use the included scripts and drush `drush cfk-orphans-show` to see what will be done followed by `drush cfk-orphans-fix` to fix them. In addition, this scripts will drop all triggers in your database. You can rebuild them by disabling and then re-enabling an extension or by running the drush command: `drush cfk-rebuild-triggers`.

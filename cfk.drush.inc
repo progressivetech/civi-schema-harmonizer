@@ -20,6 +20,9 @@ function cfk_drush_command() {
     array( 'description' => "Report all foreign key orphans in your database.");
   $items['cfk-orphans-fix'] =
     array( 'description' => "Fix all orphaned records (this will delete data).");
+  $items['cfk-rebuild-triggers'] =
+    array( 'description' => "Rebuild triggers. If you run the bash script it will drop all triggers. Use this command to rebuild them.");
+
   return $items;
 }
 
@@ -59,5 +62,10 @@ function drush_cfk_orphans_fix() {
   cfk_init();
   $dry_run = FALSE;
   cfk_delete_orphans($dry_run);
+}
+
+function drush_cfk_rebuild_triggers() {
+  cfk_init();
+  cfk_rebuild_triggers();
 }
 ?>
