@@ -97,7 +97,7 @@ printf "Re-creating the tables\n"
 mysql "$db" < "$create_ref"
 
 printf "Data import file: %s\n" "$data_site"
-read -p "Now press any key to import the data or ctl-c to cancle."
+read -p "Now press any key to import the data or ctl-c to cancel."
 
 # Importing the data
 mysql "$db" < "$data_site"
