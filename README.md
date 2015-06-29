@@ -24,6 +24,10 @@ If you are using Drupal and have drush installed, you can use this approach.
  * Check for orphaned records: `drush cfk-orphans-show`
  * Fix orphaned records: `drush cfk-orphans-fix`
 
+Note: If you get an error saying that the schema file for your database version cannot be found, you will need to generate one.
+
+You can generate a schema file by installing a fresh copy of CiviCRM that matches the version you are running. Then run the following command: `drush cfk-generate`.
+
 See below for a more destructive but complete approach.
 
 NOTE: THIS SCRIPT DESTROYS DATA. Be sure to backup your database and carefully review the script. It might have bugs and do serious damage.

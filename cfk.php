@@ -92,7 +92,6 @@ function cfk_get_schema_path() {
  */
 function cfk_generate() {
   $file = cfk_get_schema_path();
-  $file = '/tmp/jamie';
   if(file_exists($file)) {
     cfk_output("The file $file already exists.", 'error');
     return;
