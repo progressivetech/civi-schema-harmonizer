@@ -16,7 +16,8 @@ The least destructive is to only compare foreign keys and make sure all required
 
 If you are using Drupal and have drush installed, you can use this approach.
 
- * Ensure you have a .drush directory in your home directory: `mkdir -p ~/drush`
+ * Ensure you have a .drush directory in your home directory: `mkdir -p ~/.drush`
+ * Copy this directory into your ~/.drush directory.
  * Change into your web directory
  * Backup your database: `drush civicrm-sql-dump ~/civicrm.backup.sql`
  * Check for changes that would be made: `drush cfk-show`
